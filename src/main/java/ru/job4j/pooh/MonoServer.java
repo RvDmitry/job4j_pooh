@@ -65,12 +65,19 @@ public class MonoServer implements Runnable {
         Gson gson = new Gson();
         Message message = gson.fromJson(line, Message.class);
         ConcurrentLinkedQueue<String> queue = QUEUES.get(message.getQueue());
-        if (queue == null) {
-            queue = new ConcurrentLinkedQueue<>();
-            queue.offer(message.getText());
-            QUEUES.put(message.getQueue(), queue);
-        } else {
-            queue.offer(message.getText());
+        while (true) {
+            if (queue == null) {
+                queue = new ConcurrentLinkedQueue<>();
+                queue.offer(message.getText());
+                var temp = QUEUES.putIfAbsent(message.getQueue(), queue);
+                if (temp == null) {
+                    break;
+                }
+                queue = QUEUES.get(message.getQueue());
+            } else {
+                queue.offer(message.getText());
+                break;
+            }
         }
     }
 

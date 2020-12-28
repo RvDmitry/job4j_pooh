@@ -16,6 +16,9 @@ public class CunsumerClient implements Runnable {
      * Имя очереди.
      */
     private final String queue;
+    /**
+     * Сообщение, полученное из обменника.
+     */
     private String message;
 
     /**
@@ -31,7 +34,9 @@ public class CunsumerClient implements Runnable {
      * @return Сообщение.
      */
     public String getMessage() {
-        return message;
+        synchronized (this) {
+            return message;
+        }
     }
 
     /**
@@ -46,7 +51,9 @@ public class CunsumerClient implements Runnable {
             String line = in.readUTF();
             if (line.equals("OK")) {
                 out.writeUTF(queue);
-                message = in.readUTF();
+                synchronized (this) {
+                    message = in.readUTF();
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
